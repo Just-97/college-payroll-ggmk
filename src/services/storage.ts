@@ -2,16 +2,16 @@ import { Teacher, User, PayrollFormulaSettings, PayrollRecord, AuditLog } from '
 import { calculateTeacherPayroll } from './calculator';
 
 const STORAGE_KEYS = {
-  USERS: 'college_payroll_users_v1',
-  TEACHERS: 'college_payroll_teachers_v1',
-  SETTINGS: 'college_payroll_settings_v1',
-  PAYROLLS: 'college_payroll_records_v1',
-  AUDIT: 'college_payroll_audit_v1',
-  CURRENT_USER: 'college_payroll_current_user_v1',
+  USERS: 'college_payroll_users_v2',
+  TEACHERS: 'college_payroll_teachers_v2',
+  SETTINGS: 'college_payroll_settings_v2',
+  PAYROLLS: 'college_payroll_records_v2',
+  AUDIT: 'college_payroll_audit_v2',
+  CURRENT_USER: 'college_payroll_current_user_v2',
 };
 
 export const DEFAULT_SETTINGS: PayrollFormulaSettings = {
-  collegeName: 'УО «Минский государственный политехнический колледж»',
+  collegeName: 'УО «Гомельский государственный машиностроительный колледж»',
   chiefAccountantName: 'Ковалёва Е.С.',
   baseRate: 270.00, // Базовая ставка в Республике Беларусь в BYN
   standardMonthlyHours: 72, // Норма часов в месяц (норма 720 ч / 10 месяцев)
@@ -104,7 +104,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'u-admin',
     username: 'admin',
-    email: 'admin@polytech.minsk.by',
+    email: 'admin@ggmk.by',
     password: 'admin2026',
     fullName: 'Сидоров Михаил Петрович (Системный администратор)',
     role: 'ADMIN',
@@ -114,7 +114,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'u-buh',
     username: 'buhgalter',
-    email: 'buh@polytech.minsk.by',
+    email: 'buh@ggmk.by',
     password: 'buh2026',
     fullName: 'Ковалёва Елена Станиславовна (Главный бухгалтер)',
     role: 'ACCOUNTANT',
@@ -124,7 +124,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'u-t1',
     username: 'kovalev.ds',
-    email: 'kovalev.ds@polytech.minsk.by',
+    email: 'kovalev.ds@ggmk.by',
     password: 'kovalev26',
     fullName: 'Ковалёв Дмитрий Сергеевич',
     role: 'TEACHER',
@@ -135,7 +135,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'u-t2',
     username: 'moroz.on',
-    email: 'moroz.on@polytech.minsk.by',
+    email: 'moroz.on@ggmk.by',
     password: 'moroz26',
     fullName: 'Мороз Ольга Николаевна',
     role: 'TEACHER',
@@ -146,7 +146,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'u-t3',
     username: 'vasilevich.ai',
-    email: 'vasilevich.ai@polytech.minsk.by',
+    email: 'vasilevich.ai@ggmk.by',
     password: 'vasilevich26',
     fullName: 'Василевич Артём Игоревич',
     role: 'TEACHER',
