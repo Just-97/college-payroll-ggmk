@@ -2,9 +2,19 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User, Teacher, PayrollRecord, PayrollFormulaSettings, AuditLog } from '../types';
 import { DEFAULT_SETTINGS } from './constants';
 
-// Получаем переменные окружения либо смотрим в localStorage (для возможности ввода ключа в UI)
-const envUrl = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_custom_url') || '';
-const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('supabase_custom_key') || '';
+const DEFAULT_SUPABASE_URL = 'https://otyfkcjudwukzcavhqmv.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_uT2TL4sG_6_jFJR9Qa4cPA_cAeyisDW';
+
+// Получаем переменные окружения, localStorage или встроенные параметры проекта
+const envUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  localStorage.getItem('supabase_custom_url') ||
+  DEFAULT_SUPABASE_URL;
+
+const envKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  localStorage.getItem('supabase_custom_key') ||
+  DEFAULT_SUPABASE_KEY;
 
 export let supabase: SupabaseClient | null = null;
 
@@ -16,6 +26,7 @@ if (envUrl && envKey) {
     supabase = null;
   }
 }
+
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(supabase);
