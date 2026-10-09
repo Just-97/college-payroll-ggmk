@@ -138,3 +138,33 @@ VALUES
 ('u-t2', 'moroz.on', 'moroz.on@ggmk.by', 'moroz26', 'Мороз Ольга Николаевна', 'TEACHER', 't-2', TRUE),
 ('u-t3', 'vasilevich.ai', 'vasilevich.ai@ggmk.by', 'vasilevich26', 'Василевич Артём Игоревич', 'TEACHER', 't-3', TRUE)
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- ПОЛИТИКИ БЕЗОПАСНОСТИ (ROW LEVEL SECURITY - RLS)
+-- Разрешают работу приложения через публичный anon-ключ
+-- ==============================================================================
+
+ALTER TABLE payroll_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    DROP POLICY IF EXISTS "Anon public access for payroll_settings" ON payroll_settings;
+    CREATE POLICY "Anon public access for payroll_settings" ON payroll_settings FOR ALL USING (true) WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Anon public access for teachers" ON teachers;
+    CREATE POLICY "Anon public access for teachers" ON teachers FOR ALL USING (true) WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Anon public access for users" ON users;
+    CREATE POLICY "Anon public access for users" ON users FOR ALL USING (true) WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Anon public access for payroll_records" ON payroll_records;
+    CREATE POLICY "Anon public access for payroll_records" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Anon public access for audit_logs" ON audit_logs;
+    CREATE POLICY "Anon public access for audit_logs" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
+END $$;
+

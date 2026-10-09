@@ -33,7 +33,14 @@ export class AccountantModel {
 
   public async deletePayrollRecord(id: string): Promise<void> {
     StorageService.deletePayroll(id);
+    await DatabaseService.deletePayroll(id);
   }
+
+  public async deleteTeacher(id: string): Promise<void> {
+    StorageService.deleteTeacher(id);
+    await DatabaseService.deleteTeacher(id);
+  }
+
 
   public async saveSettings(settings: PayrollFormulaSettings): Promise<void> {
     StorageService.saveSettings(settings);

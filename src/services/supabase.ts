@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User, Teacher, PayrollRecord, PayrollFormulaSettings, AuditLog } from '../types';
-import { DEFAULT_SETTINGS } from './storage';
+import { DEFAULT_SETTINGS } from './constants';
 
 // Получаем переменные окружения либо смотрим в localStorage (для возможности ввода ключа в UI)
 const envUrl = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_custom_url') || '';
@@ -266,6 +266,36 @@ export const DatabaseService = {
     }
   },
 
+  async deleteTeacher(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    try {
+      const { error } = await supabase.from('teachers').delete().eq('id', id);
+      return !error;
+    } catch {
+      return false;
+    }
+  },
+
+  async deleteUser(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    try {
+      const { error } = await supabase.from('users').delete().eq('id', id);
+      return !error;
+    } catch {
+      return false;
+    }
+  },
+
+  async deletePayroll(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    try {
+      const { error } = await supabase.from('payroll_records').delete().eq('id', id);
+      return !error;
+    } catch {
+      return false;
+    }
+  },
+
   async getAuditLogs(): Promise<AuditLog[] | null> {
     if (!supabase) return null;
     try {
@@ -296,5 +326,68 @@ export const DatabaseService = {
     } catch (err) {
       console.warn('Не удалось записать лог аудита в Supabase:', err);
     }
+  },
+
+  // Проверка связи с облаком Supabase
+  async testConnection(): Promise<{ ok: boolean; message: string; tablesCount?: number }> {
+    if (!supabase) {
+      return { ok: false, message: 'Supabase клиент не инициализирован (проверьте URL и ключ)' };
+    }
+    try {
+      const { data, error } = await supabase.from('teachers').select('id').limit(1);
+      if (error) {
+        return { ok: false, message: `Ошибка базы данных: ${error.message}` };
+      }
+      return {
+        ok: true,
+        message: 'Соединение с PostgreSQL успешно установлено! Таблицы доступны.',
+        tablesCount: data ? data.length : 0,
+      };
+    } catch (err: any) {
+      return { ok: false, message: err?.message || 'Не удалось выполнить запрос к Supabase' };
+    }
+  },
+
+  // Первичная синхронизация локальных данных в Supabase
+  async syncAllLocalToSupabase(payload: {
+    settings: PayrollFormulaSettings;
+    teachers: Teacher[];
+    users: User[];
+    payrolls: PayrollRecord[];
+  }): Promise<{ success: boolean; message: string }> {
+    if (!supabase) {
+      return { success: false, message: 'Supabase не подключен' };
+    }
+
+    try {
+      // 1. Settings
+      await this.saveSettings(payload.settings);
+
+      // 2. Teachers
+      for (const t of payload.teachers) {
+        await this.saveTeacher(t);
+      }
+
+      // 3. Users
+      for (const u of payload.users) {
+        await this.saveUser(u);
+      }
+
+      // 4. Payrolls
+      for (const p of payload.payrolls) {
+        await this.savePayroll(p);
+      }
+
+      return {
+        success: true,
+        message: `Успешно выгружено: ${payload.teachers.length} преподавателей, ${payload.users.length} пользователей, ${payload.payrolls.length} начислений!`,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Сбой при синхронизации: ${err?.message || 'Ошибка сети'}`,
+      };
+    }
   }
 };
+

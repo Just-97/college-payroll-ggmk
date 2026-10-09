@@ -82,7 +82,9 @@ export class UserModel {
   public async deleteUser(userId: string): Promise<boolean> {
     this.users = this.users.filter((u) => u.id !== userId);
     StorageService.deleteUser(userId);
+    await DatabaseService.deleteUser(userId);
     this.notify();
     return true;
   }
 }
+

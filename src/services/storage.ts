@@ -1,5 +1,9 @@
 import { Teacher, User, PayrollFormulaSettings, PayrollRecord, AuditLog } from '../types';
 import { calculateTeacherPayroll } from './calculator';
+import { DEFAULT_SETTINGS } from './constants';
+import { DatabaseService } from './supabase';
+
+export { DEFAULT_SETTINGS };
 
 const STORAGE_KEYS = {
   USERS: 'college_payroll_users_v2',
@@ -8,35 +12,6 @@ const STORAGE_KEYS = {
   PAYROLLS: 'college_payroll_records_v2',
   AUDIT: 'college_payroll_audit_v2',
   CURRENT_USER: 'college_payroll_current_user_v2',
-};
-
-export const DEFAULT_SETTINGS: PayrollFormulaSettings = {
-  collegeName: 'УО «Гомельский государственный машиностроительный колледж»',
-  chiefAccountantName: 'Ковалёва Е.С.',
-  baseRate: 270.00, // Базовая ставка в Республике Беларусь в BYN
-  standardMonthlyHours: 72, // Норма часов в месяц (норма 720 ч / 10 месяцев)
-  categoryBonusPercent: {
-    NONE: 0,
-    SECOND: 15,
-    FIRST: 25,
-    HIGHER: 35,
-    METHODIST: 45,
-  },
-  experienceRules: [
-    { minYears: 0, maxYears: 5, percentOfBaseRate: 10 },
-    { minYears: 5, maxYears: 10, percentOfBaseRate: 15 },
-    { minYears: 10, maxYears: 15, percentOfBaseRate: 20 },
-    { minYears: 15, maxYears: 100, percentOfBaseRate: 30 },
-  ],
-  educationSectorBonusPercent: 40, // 40% от оклада за специфику работы в сфере образования
-  curatorBonusPercentOfBaseRate: 80, // 80% от базовой ставки за кураторство группы
-  cabinetManagementPercentOfBaseRate: 20, // 20% от базовой ставки за заведование кабинетом
-  writtenWorkCheckPercent: 12, // 12% от оплаты часов за проверку тетрадей
-  headOfCommissionBonusPercent: 25, // 25% от базовой ставки за руководство ЦК
-  incomeTaxRate: 13, // 13% Подоходный налог в РБ
-  pensionFundRate: 1, // 1% Взнос в ФСЗН с работника
-  tradeUnionRate: 1, // 1% Профсоюзный взнос
-  childTaxDeductionPerChild: 51.00, // 51 BYN вычет на ребенка
 };
 
 export const INITIAL_TEACHERS: Teacher[] = [
@@ -245,6 +220,7 @@ export const StorageService = {
   saveSettings(settings: PayrollFormulaSettings): void {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     this.addAuditLog('SYSTEM', 'Обновление формул и базовой ставки', `Базовая ставка: ${settings.baseRate} BYN`);
+    DatabaseService.saveSettings(settings).catch(() => {});
   },
 
   getTeachers(): Teacher[] {
@@ -270,11 +246,13 @@ export const StorageService = {
     }
     localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
     this.addAuditLog('ACCOUNTANT', 'Сохранение преподавателя', `Преподаватель: ${teacher.fullName}`);
+    DatabaseService.saveTeacher(teacher).catch(() => {});
   },
 
   deleteTeacher(id: string): void {
     const teachers = this.getTeachers().filter(t => t.id !== id);
     localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+    DatabaseService.deleteTeacher(id).catch(() => {});
   },
 
   getPayrolls(): PayrollRecord[] {
@@ -301,12 +279,14 @@ export const StorageService = {
     }
     localStorage.setItem(STORAGE_KEYS.PAYROLLS, JSON.stringify(payrolls));
     this.addAuditLog('ACCOUNTANT', 'Расчет зарплаты', `Листок ID ${record.id}: начислено ${record.grossTotal} BYN`);
+    DatabaseService.savePayroll(record).catch(() => {});
   },
 
   deletePayroll(id: string): void {
     const payrolls = this.getPayrolls().filter(p => p.id !== id);
     localStorage.setItem(STORAGE_KEYS.PAYROLLS, JSON.stringify(payrolls));
     this.addAuditLog('ACCOUNTANT', 'Удаление расчета', `Удален расчет ${id}`);
+    DatabaseService.deletePayroll(id).catch(() => {});
   },
 
   getUsers(): User[] {
@@ -332,13 +312,48 @@ export const StorageService = {
     }
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     this.addAuditLog('ADMIN', 'Управление пользователем', `Пользователь: ${user.username} (${user.role})`);
+    DatabaseService.saveUser(user).catch(() => {});
   },
 
   deleteUser(id: string): void {
     const users = this.getUsers().filter(u => u.id !== id);
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     this.addAuditLog('ADMIN', 'Удаление пользователя', `Удален ID: ${id}`);
+    DatabaseService.deleteUser(id).catch(() => {});
   },
+
+  async hydrateFromSupabase(): Promise<boolean> {
+    try {
+      const [dbSettings, dbTeachers, dbUsers, dbPayrolls] = await Promise.all([
+        DatabaseService.getSettings(),
+        DatabaseService.getTeachers(),
+        DatabaseService.getUsers(),
+        DatabaseService.getPayrolls(),
+      ]);
+
+      let updated = false;
+      if (dbSettings) {
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(dbSettings));
+        updated = true;
+      }
+      if (dbTeachers && dbTeachers.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(dbTeachers));
+        updated = true;
+      }
+      if (dbUsers && dbUsers.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(dbUsers));
+        updated = true;
+      }
+      if (dbPayrolls && dbPayrolls.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.PAYROLLS, JSON.stringify(dbPayrolls));
+        updated = true;
+      }
+      return updated;
+    } catch {
+      return false;
+    }
+  },
+
 
   getCurrentUser(): User {
     const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);

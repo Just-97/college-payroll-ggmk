@@ -36,12 +36,22 @@ export const App: React.FC = () => {
   // 3. Инициализация MVVM для модуля бухгалтера
   const accountantModel = useMemo(() => new AccountantModel(), []);
 
-  // Загрузка начальных данных
+  // Загрузка начальных данных и фоновая гидратация из Supabase
   useEffect(() => {
     setUsers(StorageService.getUsers());
     setTeachers(StorageService.getTeachers());
     setAuditLogs(StorageService.getAuditLogs());
     setCurrentUser(StorageService.getCurrentUser());
+
+    // Фоновая синхронизация с облачной БД
+    StorageService.hydrateFromSupabase().then((updated) => {
+      if (updated) {
+        setUsers(StorageService.getUsers());
+        setTeachers(StorageService.getTeachers());
+        setAuditLogs(StorageService.getAuditLogs());
+        setCurrentUser(StorageService.getCurrentUser());
+      }
+    });
 
     // Слушатель изменения hash в адресной строке
     const handleHashChange = () => {
@@ -50,6 +60,7 @@ export const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
 
   // Переход в кабинет администратора (отдельная страница /admin)
   const navigateToAdmin = () => {

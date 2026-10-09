@@ -9,9 +9,11 @@ import { AdminController } from './AdminController';
 import { User, UserRole, Teacher, AuditLog } from '../../types';
 import {
   ShieldAlert, UserPlus, KeyRound, Mail, UserCheck, Trash2, Edit,
-  Eye, EyeOff, History, ArrowLeft, RefreshCw, X, Lock, Database
+  Eye, EyeOff, History, ArrowLeft, RefreshCw, X, Lock, Database,
+  Check, AlertCircle, UploadCloud, Server
 } from 'lucide-react';
-import { isSupabaseConfigured, configureSupabaseClient } from '../../services/supabase';
+import { isSupabaseConfigured, configureSupabaseClient, DatabaseService } from '../../services/supabase';
+import { StorageService } from '../../services/storage';
 
 interface AdminViewProps {
   model: UserModel;
@@ -47,6 +49,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
     import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('supabase_custom_key') || ''
   );
   const [supabaseConnected, setSupabaseConnected] = useState(isSupabaseConfigured());
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     // Подписка View на Model
@@ -90,8 +96,46 @@ export const AdminView: React.FC<AdminViewProps> = ({
     e.preventDefault();
     const ok = configureSupabaseClient(supabaseUrl.trim(), supabaseKey.trim());
     setSupabaseConnected(ok);
+    setTestResult(null);
+    setSyncResult(null);
     alert(ok ? 'Параметры Supabase успешно сохранены!' : 'Подключение сброшено.');
   };
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const res = await DatabaseService.testConnection();
+      setTestResult(res);
+      setSupabaseConnected(res.ok);
+    } catch (err: any) {
+      setTestResult({ ok: false, message: err?.message || 'Ошибка тестирования' });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleSyncData = async () => {
+    if (!confirm('Выгрузить всех преподавателей, пользователей, настройки и начисления из локальной базы в облако Supabase?')) {
+      return;
+    }
+    setIsSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await DatabaseService.syncAllLocalToSupabase({
+        settings: StorageService.getSettings(),
+        teachers: StorageService.getTeachers(),
+        users: StorageService.getUsers(),
+        payrolls: StorageService.getPayrolls(),
+      });
+      setSyncResult({ ok: res.success, message: res.message });
+    } catch (err: any) {
+      setSyncResult({ ok: false, message: err?.message || 'Ошибка синхронизации' });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
 
   const filteredUsers = users.filter((u) =>
     u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -352,58 +396,155 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
         {/* ВКЛАДКА: НАСТРОЙКИ БАЗЫ ДАННЫХ SUPABASE */}
         {activeTab === 'DATABASE' && (
-          <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 shadow-xl max-w-2xl">
-            <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
-              <Database className="w-5 h-5 text-emerald-400" />
-              Подключение к облачной СУБД Supabase (PostgreSQL)
-            </h3>
-            <p className="text-xs text-slate-400 mb-6">
-              Вы можете ввести параметры проекта Supabase для работы с удаленной базой данных. Если параметры не заданы, система автоматически работает в режиме локального реактивного хранилища.
-            </p>
-
-            <form onSubmit={handleSaveSupabaseConfig} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Project URL (VITE_SUPABASE_URL):
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://xyzcompany.supabase.co"
-                  value={supabaseUrl}
-                  onChange={(e) => setSupabaseUrl(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
+          <div className="space-y-6 max-w-3xl">
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Database className="w-5 h-5 text-emerald-400" />
+                  Подключение к облачной СУБД Supabase (PostgreSQL)
+                </h3>
+                <span className={`px-2.5 py-1 text-xs rounded-full font-bold flex items-center gap-1.5 ${supabaseConnected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                  {supabaseConnected ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      Подключено
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                      Локальный режим (Offline)
+                    </>
+                  )}
+                </span>
               </div>
+              <p className="text-xs text-slate-400 mb-6">
+                Все изменения преподавателей, учетных записей и начислений автоматически сохраняются в PostgreSQL при активном подключении. Если параметры не заданы, система использует локальное хранилище.
+              </p>
 
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Anon Public API Key (VITE_SUPABASE_ANON_KEY):
-                </label>
-                <input
-                  type="password"
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  value={supabaseKey}
-                  onChange={(e) => setSupabaseKey(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-              </div>
+              <form onSubmit={handleSaveSupabaseConfig} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Project URL (VITE_SUPABASE_URL):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://your-project.supabase.co"
+                    value={supabaseUrl}
+                    onChange={(e) => setSupabaseUrl(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
 
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-[11px] leading-relaxed">
-                Файл миграций и SQL-скрипт готов в репозитории: <strong className="text-emerald-300">supabase/schema.sql</strong>. Скопируйте его содержимое в SQL Editor в панели Supabase для создания таблиц и начальных данных.
-              </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Anon Public API Key (VITE_SUPABASE_ANON_KEY):
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    value={supabaseKey}
+                    onChange={(e) => setSupabaseKey(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
 
-              <div className="flex justify-end gap-3 pt-3">
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors"
-                >
-                  Сохранить подключение
-                </button>
-              </div>
-            </form>
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={isTesting || !supabaseUrl || !supabaseKey}
+                      onClick={handleTestConnection}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-emerald-300 font-medium rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5"
+                    >
+                      <Server className="w-4 h-4" />
+                      {isTesting ? 'Проверка...' : 'Проверить соединение'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isSyncing || !supabaseConnected}
+                      onClick={handleSyncData}
+                      className="px-4 py-2 bg-emerald-950 hover:bg-emerald-900 disabled:opacity-50 text-emerald-300 font-medium rounded-xl border border-emerald-800 transition-colors flex items-center gap-1.5"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      {isSyncing ? 'Выгрузка...' : 'Выгрузить локальные данные в Supabase'}
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-900/40"
+                  >
+                    Сохранить параметры
+                  </button>
+                </div>
+              </form>
+
+              {/* Результат проверки соединения */}
+              {testResult && (
+                <div className={`mt-4 p-3 rounded-xl border text-xs flex items-start gap-2.5 ${testResult.ok ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200' : 'bg-rose-950/60 border-rose-800 text-rose-200'}`}>
+                  {testResult.ok ? (
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-bold">{testResult.ok ? 'Соединение успешно!' : 'Ошибка подключения'}</div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">{testResult.message}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Результат выгрузки данных */}
+              {syncResult && (
+                <div className={`mt-4 p-3 rounded-xl border text-xs flex items-start gap-2.5 ${syncResult.ok ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200' : 'bg-rose-950/60 border-rose-800 text-rose-200'}`}>
+                  {syncResult.ok ? (
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-bold">{syncResult.ok ? 'Синхронизация завершена' : 'Ошибка синхронизации'}</div>
+                    <div className="text-[11px] text-slate-300 mt-0.5">{syncResult.message}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Пошаговая инструкция */}
+            <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-6">
+              <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                📋 Пошаговая инструкция подключения Supabase
+              </h4>
+              <ol className="list-decimal list-inside space-y-2 text-xs text-slate-300 leading-relaxed">
+                <li>
+                  Перейдите на сайт <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">supabase.com</a> и войдите через GitHub или создайте аккаунт.
+                </li>
+                <li>
+                  Нажмите <strong>«New project»</strong>, задайте имя проекта (например, <code className="text-emerald-300">ggmk-payroll</code>), пароль базы данных и выберите ближайший регион (например, Frankfurt/EU).
+                </li>
+                <li>
+                  В меню слева откройте <strong>SQL Editor</strong> $\rightarrow$ <strong>«New query»</strong>.
+                </li>
+                <li>
+                  Скопируйте весь код из файла <code className="text-emerald-300">supabase/schema.sql</code> вашего репозитория, вставьте в редактор Supabase и нажмите зелёную кнопку <strong>Run</strong>.
+                </li>
+                <li>
+                  В меню проекта перейдите в <strong>Project Settings $\rightarrow$ API</strong> (или <strong>Connect</strong>) и скопируйте:
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1 text-slate-400 font-mono text-[11px]">
+                    <li><strong>Project URL</strong> (формата <code className="text-slate-300">https://xxxx.supabase.co</code>)</li>
+                    <li><strong>anon public key</strong> (длинный JWT токен)</li>
+                  </ul>
+                </li>
+                <li>
+                  Вставьте эти два значения в форму выше и нажмите <strong>«Сохранить параметры»</strong>, затем нажмите <strong>«Проверить соединение»</strong>!
+                </li>
+              </ol>
+            </div>
           </div>
         )}
       </main>
+
 
       {/* МОДАЛЬНОЕ ОКНО СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ */}
       {isModalOpen && (
