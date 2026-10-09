@@ -149,18 +149,19 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payroll_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Anon public access for payroll_settings" ON payroll_settings;
-CREATE POLICY "Anon public access for payroll_settings" ON payroll_settings FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS p_payroll_settings ON payroll_settings;
+CREATE POLICY p_payroll_settings ON payroll_settings FOR ALL USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Anon public access for teachers" ON teachers;
-CREATE POLICY "Anon public access for teachers" ON teachers FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS p_teachers ON teachers;
+CREATE POLICY p_teachers ON teachers FOR ALL USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Anon public access for users" ON users;
-CREATE POLICY "Anon public access for users" ON users FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS p_users ON users;
+CREATE POLICY p_users ON users FOR ALL USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Anon public access for payroll_records" ON payroll_records;
-CREATE POLICY "Anon public access for payroll_records" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS p_payroll_records ON payroll_records;
+CREATE POLICY p_payroll_records ON payroll_records FOR ALL USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Anon public access for audit_logs" ON audit_logs;
-CREATE POLICY "Anon public access for audit_logs" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS p_audit_logs ON audit_logs;
+CREATE POLICY p_audit_logs ON audit_logs FOR ALL USING (true) WITH CHECK (true);
+
 
