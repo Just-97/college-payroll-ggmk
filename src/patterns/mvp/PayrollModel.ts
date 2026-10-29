@@ -5,6 +5,7 @@
 
 import { Teacher, PayrollRecord, PayrollFormulaSettings } from '../../types';
 import { StorageService } from '../../services/storage';
+import { DatabaseService } from '../../services/supabase';
 
 export class PayrollModel {
   private teacher: Teacher;
@@ -22,6 +23,19 @@ export class PayrollModel {
     this.records = all
       .filter((r) => r.teacherId === this.teacher.id)
       .sort((a, b) => (b.year * 100 + b.month) - (a.year * 100 + a.month));
+  }
+
+  public async loadDataAsync(): Promise<PayrollRecord[]> {
+    try {
+      const dbPayrolls = await DatabaseService.getPayrolls();
+      if (dbPayrolls && dbPayrolls.length > 0) {
+        StorageService.saveAllPayrolls(dbPayrolls);
+      }
+    } catch {
+      // fallback
+    }
+    this.refreshData();
+    return this.getTeacherRecords();
   }
 
   public getTeacher(): Teacher {

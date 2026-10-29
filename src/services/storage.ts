@@ -6,12 +6,12 @@ import { DatabaseService } from './supabase';
 export { DEFAULT_SETTINGS };
 
 const STORAGE_KEYS = {
-  USERS: 'college_payroll_users_v2',
-  TEACHERS: 'college_payroll_teachers_v2',
-  SETTINGS: 'college_payroll_settings_v2',
-  PAYROLLS: 'college_payroll_records_v2',
-  AUDIT: 'college_payroll_audit_v2',
-  CURRENT_USER: 'college_payroll_current_user_v2',
+  USERS: 'college_payroll_users_v3',
+  TEACHERS: 'college_payroll_teachers_v3',
+  SETTINGS: 'college_payroll_settings_v3',
+  PAYROLLS: 'college_payroll_records_v3',
+  AUDIT: 'college_payroll_audit_v3',
+  CURRENT_USER: 'college_payroll_current_user_v3',
 };
 
 export const INITIAL_TEACHERS: Teacher[] = [
@@ -23,7 +23,7 @@ export const INITIAL_TEACHERS: Teacher[] = [
     position: 'Преподаватель спецдисциплин',
     qualificationCategory: 'HIGHER',
     experienceYears: 16,
-    educationLevel: 'Высшее (БГУИР, педагогическая переподготовка РИПО)',
+    educationLevel: 'Высшее (БГУИР, переподготовка РИПО)',
     isGroupCurator: true,
     curatorGroupName: 'гр. 24-ПО-1',
     hasCabinetManagement: true,
@@ -47,6 +47,7 @@ export const INITIAL_TEACHERS: Teacher[] = [
     isGroupCurator: true,
     curatorGroupName: 'гр. 25-МТ-2',
     hasCabinetManagement: false,
+    cabinetName: undefined,
     hasWrittenWorkCheck: true,
     isHeadOfCycleCommission: false,
     tariffRank: 9,
@@ -64,11 +65,52 @@ export const INITIAL_TEACHERS: Teacher[] = [
     experienceYears: 2,
     educationLevel: 'Высшее (БНТУ, молодой специалист)',
     isGroupCurator: false,
+    curatorGroupName: undefined,
     hasCabinetManagement: true,
     cabinetName: 'Каб. 108 «Мастерская монтажа радиоэлектроники»',
     hasWrittenWorkCheck: false,
     isHeadOfCycleCommission: false,
     tariffRank: 8,
+    isTradeUnionMember: true,
+    hasChildrenTaxDeduction: false,
+    childrenCount: 0,
+  },
+  {
+    id: 't-4',
+    fullName: 'Смирнова Светлана Владимировна',
+    tabNumber: 'ТН-0188',
+    department: 'Отделение машиностроения и металлообработки',
+    position: 'Преподаватель инженерной графики и механики',
+    qualificationCategory: 'METHODIST',
+    experienceYears: 21,
+    educationLevel: 'Высшее (ГГТУ им. П.О. Сухого)',
+    isGroupCurator: true,
+    curatorGroupName: 'гр. 23-ТМ-1',
+    hasCabinetManagement: true,
+    cabinetName: 'Каб. 205 «Инженерная графика и САПР»',
+    hasWrittenWorkCheck: true,
+    isHeadOfCycleCommission: false,
+    tariffRank: 11,
+    isTradeUnionMember: true,
+    hasChildrenTaxDeduction: true,
+    childrenCount: 1,
+  },
+  {
+    id: 't-5',
+    fullName: 'Григорьев Павел Андреевич',
+    tabNumber: 'ТН-0235',
+    department: 'Отделение информационных технологий',
+    position: 'Преподаватель веб-разработки и баз данных',
+    qualificationCategory: 'SECOND',
+    experienceYears: 5,
+    educationLevel: 'Высшее (ГГУ им. Ф. Скорины)',
+    isGroupCurator: false,
+    curatorGroupName: undefined,
+    hasCabinetManagement: false,
+    cabinetName: undefined,
+    hasWrittenWorkCheck: false,
+    isHeadOfCycleCommission: false,
+    tariffRank: 9,
     isTradeUnionMember: true,
     hasChildrenTaxDeduction: false,
     childrenCount: 0,
@@ -129,76 +171,83 @@ export const INITIAL_USERS: User[] = [
     createdAt: '2026-09-01T09:30:00Z',
     isActive: true,
   },
+  {
+    id: 'u-t4',
+    username: 'smirnova.sv',
+    email: 'smirnova.sv@ggmk.by',
+    password: 'smirnova26',
+    fullName: 'Смирнова Светлана Владимировна',
+    role: 'TEACHER',
+    teacherId: 't-4',
+    createdAt: '2026-09-01T09:45:00Z',
+    isActive: true,
+  },
+  {
+    id: 'u-t5',
+    username: 'grigoriev.pa',
+    email: 'grigoriev.pa@ggmk.by',
+    password: 'grigoriev26',
+    fullName: 'Григорьев Павел Андреевич',
+    role: 'TEACHER',
+    teacherId: 't-5',
+    createdAt: '2026-09-01T10:00:00Z',
+    isActive: true,
+  },
 ];
 
 function generateSeedPayrolls(): PayrollRecord[] {
   const records: PayrollRecord[] = [];
   const settings = DEFAULT_SETTINGS;
 
-  // Сентябрь 2026 (Текущий рассчитанный месяц)
-  records.push(calculateTeacherPayroll({
-    teacher: INITIAL_TEACHERS[0],
-    hoursWorked: 76,
-    kpiBonus: 180.00,
-    advancePaid: 450.00,
-    year: 2026,
-    month: 9,
-    periodName: 'Сентябрь 2026',
-    status: 'CALCULATED',
-    settings,
-    notes: 'Основная нагрузка + руководство курсовым проектированием',
-  }));
+  const periods = [
+    { year: 2026, month: 10, periodName: 'Октябрь 2026', status: 'CALCULATED' as const, kpiFactor: 1.1, advance: 450 },
+    { year: 2026, month: 9, periodName: 'Сентябрь 2026', status: 'PAID' as const, kpiFactor: 1.0, advance: 400 },
+    { year: 2026, month: 8, periodName: 'Август 2026', status: 'PAID' as const, kpiFactor: 0.8, advance: 350 },
+  ];
 
-  records.push(calculateTeacherPayroll({
-    teacher: INITIAL_TEACHERS[1],
-    hoursWorked: 72,
-    kpiBonus: 120.00,
-    advancePaid: 380.00,
-    year: 2026,
-    month: 9,
-    periodName: 'Сентябрь 2026',
-    status: 'CALCULATED',
-    settings,
-    notes: 'Нагрузка по плану, кураторство',
-  }));
+  const hoursMap: Record<string, Record<number, number>> = {
+    't-1': { 10: 76, 9: 72, 8: 72 },
+    't-2': { 10: 72, 9: 72, 8: 70 },
+    't-3': { 10: 70, 9: 68, 8: 68 },
+    't-4': { 10: 80, 9: 76, 8: 72 },
+    't-5': { 10: 74, 9: 72, 8: 72 },
+  };
 
-  records.push(calculateTeacherPayroll({
-    teacher: INITIAL_TEACHERS[2],
-    hoursWorked: 68,
-    kpiBonus: 80.00,
-    advancePaid: 300.00,
-    year: 2026,
-    month: 9,
-    periodName: 'Сентябрь 2026',
-    status: 'CALCULATED',
-    settings,
-    notes: 'Молодой специалист, заведование мастерской',
-  }));
+  const baseKpiMap: Record<string, number> = {
+    't-1': 160,
+    't-2': 110,
+    't-3': 75,
+    't-4': 200,
+    't-5': 90,
+  };
 
-  // Август 2026 (Выплаченный месяц / отпускные/подготовка)
-  records.push(calculateTeacherPayroll({
-    teacher: INITIAL_TEACHERS[0],
-    hoursWorked: 72,
-    kpiBonus: 150.00,
-    advancePaid: 400.00,
-    year: 2026,
-    month: 8,
-    periodName: 'Август 2026',
-    status: 'PAID',
-    settings,
-  }));
+  const notesMap: Record<string, string> = {
+    't-1': 'Основная нагрузка + руководство курсовыми работами ЦК',
+    't-2': 'Учебный план, кураторство группы и проверка контрольных',
+    't-3': 'Молодой специалист, заведование монтажной мастерской',
+    't-4': 'Методическая работа, разработка учебно-методического комплекса (УМК)',
+    't-5': 'Проведение лабораторно-практических занятий по БД',
+  };
 
-  records.push(calculateTeacherPayroll({
-    teacher: INITIAL_TEACHERS[1],
-    hoursWorked: 72,
-    kpiBonus: 100.00,
-    advancePaid: 350.00,
-    year: 2026,
-    month: 8,
-    periodName: 'Август 2026',
-    status: 'PAID',
-    settings,
-  }));
+  for (const t of INITIAL_TEACHERS) {
+    for (const p of periods) {
+      const hours = hoursMap[t.id]?.[p.month] || 72;
+      const kpi = Math.round((baseKpiMap[t.id] || 100) * p.kpiFactor);
+      records.push(calculateTeacherPayroll({
+        teacher: t,
+        hoursWorked: hours,
+        kpiBonus: kpi,
+        advancePaid: p.advance,
+        year: p.year,
+        month: p.month,
+        periodName: p.periodName,
+        status: p.status,
+        settings,
+        existingId: `pay-${t.id}-${p.year}-${p.month}`,
+        notes: notesMap[t.id] || '',
+      }));
+    }
+  }
 
   return records;
 }
@@ -280,6 +329,10 @@ export const StorageService = {
     localStorage.setItem(STORAGE_KEYS.PAYROLLS, JSON.stringify(payrolls));
     this.addAuditLog('ACCOUNTANT', 'Расчет зарплаты', `Листок ID ${record.id}: начислено ${record.grossTotal} BYN`);
     DatabaseService.savePayroll(record).catch(() => {});
+  },
+
+  saveAllPayrolls(records: PayrollRecord[]): void {
+    localStorage.setItem(STORAGE_KEYS.PAYROLLS, JSON.stringify(records));
   },
 
   deletePayroll(id: string): void {

@@ -35,16 +35,32 @@ export class PayslipPresenter {
     const records = this.model.getTeacherRecords();
 
     if (records.length === 0) {
+      this.model.loadDataAsync().then((updated) => {
+        if (!this.view) return;
+        if (updated.length > 0) {
+          this.applyRecordsToView(updated);
+        } else {
+          this.view.renderEmptyState();
+        }
+      });
       this.view.renderEmptyState();
       return;
     }
 
+    this.applyRecordsToView(records);
+  }
+
+  private applyRecordsToView(records: any[]): void {
+    if (!this.view) return;
     const options = records.map((r) => ({
       id: r.id,
       label: `${r.periodName} (${r.status === 'PAID' ? 'Выплачено' : 'Рассчитано'})`,
     }));
 
-    const selectedId = this.currentRecordId || records[0].id;
+    const selectedId =
+      this.currentRecordId && records.some((r) => r.id === this.currentRecordId)
+        ? this.currentRecordId
+        : records[0].id;
     this.currentRecordId = selectedId;
 
     this.view.setPeriodOptions(options, selectedId);

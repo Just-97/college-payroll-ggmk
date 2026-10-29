@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, Teacher, AuditLog } from './types';
-import { StorageService } from './services/storage';
+import { StorageService, INITIAL_TEACHERS } from './services/storage';
 import { Header } from './components/Header';
 
 // 1. Паттерн MVC (Model-View-Controller) для модуля администрирования
@@ -19,14 +19,15 @@ import { AccountantView } from './patterns/mvvm/AccountantView';
 
 export const App: React.FC = () => {
   // Состояния приложения
-  const [users, setUsers] = useState<User[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
+  const [teachers, setTeachers] = useState<Teacher[]>(() => StorageService.getTeachers());
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => StorageService.getAuditLogs());
+  const [currentUser, setCurrentUser] = useState<User>(() => StorageService.getCurrentUser());
+  const [dataVersion, setDataVersion] = useState<number>(0);
 
   // Флаг нахождения в изолированном кабинете администратора (/admin)
-  const [isAdminPage, setIsAdminPage] = useState<boolean>(
-    window.location.hash === '#/admin'
+  const [isAdminPage, setIsAdminPage] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.location.hash === '#/admin'
   );
 
   // 1. Инициализация MVC для административного модуля
@@ -36,13 +37,28 @@ export const App: React.FC = () => {
   // 3. Инициализация MVVM для модуля бухгалтера
   const accountantModel = useMemo(() => new AccountantModel(), []);
 
+  // 2. Инициализация MVP для расчетного листка выбранного преподавателя
+  const linkedTeacher = useMemo(() => {
+    return (
+      teachers.find((t) => t.id === currentUser?.teacherId) ||
+      teachers[0] ||
+      INITIAL_TEACHERS[0]
+    );
+  }, [teachers, currentUser?.teacherId]);
+
+  const settings = useMemo(() => StorageService.getSettings(), [dataVersion]);
+
+  const payrollModel = useMemo(
+    () => new PayrollModel(linkedTeacher, settings),
+    [linkedTeacher, settings, dataVersion]
+  );
+  const payslipPresenter = useMemo(
+    () => new PayslipPresenter(payrollModel),
+    [payrollModel]
+  );
+
   // Загрузка начальных данных и фоновая гидратация из Supabase
   useEffect(() => {
-    setUsers(StorageService.getUsers());
-    setTeachers(StorageService.getTeachers());
-    setAuditLogs(StorageService.getAuditLogs());
-    setCurrentUser(StorageService.getCurrentUser());
-
     // Фоновая синхронизация с облачной БД
     StorageService.hydrateFromSupabase().then((updated) => {
       if (updated) {
@@ -50,6 +66,7 @@ export const App: React.FC = () => {
         setTeachers(StorageService.getTeachers());
         setAuditLogs(StorageService.getAuditLogs());
         setCurrentUser(StorageService.getCurrentUser());
+        setDataVersion((v) => v + 1);
       }
     });
 
@@ -60,7 +77,6 @@ export const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-
 
   // Переход в кабинет администратора (отдельная страница /admin)
   const navigateToAdmin = () => {
@@ -97,14 +113,6 @@ export const App: React.FC = () => {
     );
   }
 
-  // 2. ОСНОВНОЙ САЙТ / ПОРТАЛ КОЛЛЕДЖА (ПРЕПОДАВАТЕЛЬ / БУХГАЛТЕР)
-  const linkedTeacher = teachers.find((t) => t.id === currentUser.teacherId) || teachers[0];
-  const settings = StorageService.getSettings();
-
-  // 2. Инициализация MVP для расчетного листка выбранного преподавателя
-  const payrollModel = new PayrollModel(linkedTeacher, settings);
-  const payslipPresenter = new PayslipPresenter(payrollModel);
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 font-['Inter',sans-serif]">
       {/* Шапка портала */}
@@ -122,7 +130,7 @@ export const App: React.FC = () => {
         {currentUser.role === 'ACCOUNTANT' ? (
           <AccountantView model={accountantModel} />
         ) : (
-          <PayslipView presenter={payslipPresenter} />
+          <PayslipView key={linkedTeacher.id} presenter={payslipPresenter} />
         )}
       </main>
 
