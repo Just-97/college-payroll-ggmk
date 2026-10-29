@@ -114,7 +114,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-extrabold tracking-tight text-white">
-                  Панель Администратора (Архитектура MVC)
+                  Панель администратора
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   /admin
@@ -140,20 +140,20 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
       {/* ОСНОВНОЙ КОНТЕНТ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
-        {/* Баннер паттерна MVC и статуса БД */}
-        <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Панель управления пользователями и статус БД */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                Паттерн: Model-View-Controller (MVC)
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm font-bold text-white tracking-tight">
+                Управление учетными записями колледжа
               </span>
-              <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold flex items-center gap-1 ${supabaseConnected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
+              <span className={`px-2 py-0.5 text-[10px] rounded-full font-bold flex items-center gap-1.5 ${supabaseConnected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
                 <Database className="w-3 h-3" />
-                {supabaseConnected ? 'Supabase: Подключено' : 'База данных: Local/Offline'}
+                {supabaseConnected ? 'Supabase: Синхронизировано' : 'База данных: Local/Offline'}
               </span>
             </div>
-            <p className="text-xs text-slate-300 mt-1">
-              <strong>Model</strong> (UserModel) хранит данные и валидацию • <strong>Controller</strong> (AdminController) обрабатывает команды • <strong>View</strong> отображает интерфейс.
+            <p className="text-xs text-slate-400 mt-1">
+              Разграничение прав доступа преподавателей, бухгалтерии и администрации, аудит безопасности
             </p>
           </div>
 
@@ -231,7 +231,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                     <th className="px-3 py-3.5">Роль в системе</th>
                     <th className="px-3 py-3.5">Привязка преподавателя</th>
                     <th className="px-3 py-3.5 text-center">Статус</th>
-                    <th className="px-4 py-3.5 text-center">Действия (Controller)</th>
+                    <th className="px-4 py-3.5 text-center">Действия</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-normal">
@@ -486,7 +486,7 @@ function UserEditModal({
         <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-800">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Lock className="w-4 h-4 text-emerald-400" />
-            {user ? 'Редактирование пользователя (MVC View)' : 'Создание пользователя (MVC View)'}
+            {user ? 'Редактирование пользователя' : 'Создание нового пользователя'}
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white">
             <X className="w-5 h-5" />

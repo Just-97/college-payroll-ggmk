@@ -30,25 +30,13 @@ export const AccountantView: React.FC<AccountantViewProps> = ({ model }) => {
 
   return (
     <div className="space-y-6">
-      {/* Баннер архитектуры MVVM */}
-      <div className="bg-emerald-950/20 border border-emerald-800/30 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 no-print">
-        <div>
-          <span className="font-bold text-emerald-800 uppercase tracking-wider mr-2">
-            Паттерн: Model-View-ViewModel (MVVM)
-          </span>
-          <span className="text-slate-600">
-            View связан с ViewModel через реактивный Data Binding • ViewModel хранит состояние и команды • Model инкапсулирует данные
-          </span>
-        </div>
-      </div>
-
-      {/* Шапка рабочего места бухгалтера (MVVM Data Binding к vm.settings) */}
+      {/* Шапка рабочего места бухгалтера */}
       <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-forest-950 text-white rounded-2xl p-6 md:p-8 shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-800 text-emerald-200 text-xs font-semibold mb-2">
               <Calculator className="w-3.5 h-3.5" />
-              АРМ Главного бухгалтера (MVVM View)
+              АРМ Главного бухгалтера
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               Расчет заработной платы преподавателей
@@ -171,7 +159,7 @@ export const AccountantView: React.FC<AccountantViewProps> = ({ model }) => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors"
             >
               <FileDown className="w-4 h-4" />
-              Экспорт CSV (Command)
+              Экспорт ведомости (CSV)
             </button>
             <button
               onClick={() => window.print()}

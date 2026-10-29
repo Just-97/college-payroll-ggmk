@@ -37,20 +37,20 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Профиль и быстрое переключение ролей для демонстрации */}
-        <div className="flex items-center gap-3">
-          {/* Селектор демонстрации пользователей */}
-          <div className="hidden sm:flex items-center bg-emerald-900/80 border border-emerald-700/60 rounded-xl px-3 py-1.5 gap-2">
-            <UserCircle2 className="w-4 h-4 text-emerald-300" />
-            <div className="text-xs">
-              <span className="text-emerald-400 block text-[10px] uppercase font-semibold">Войти под профилем:</span>
+        {/* Профиль и выбор пользователя */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Селектор пользователей */}
+          <div className="flex items-center bg-emerald-900/80 border border-emerald-700/60 rounded-xl px-2.5 sm:px-3 py-1.5 gap-2 max-w-[190px] sm:max-w-none">
+            <UserCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+            <div className="text-xs truncate">
+              <span className="text-emerald-400 block text-[9px] sm:text-[10px] uppercase font-semibold">Пользователь:</span>
               <select
                 value={currentUser.id}
                 onChange={(e) => {
                   const target = allUsers.find((u) => u.id === e.target.value);
                   if (target) onSwitchUser(target);
                 }}
-                className="bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer truncate max-w-[140px] sm:max-w-[220px]"
               >
                 {allUsers
                   .filter((u) => u.role !== 'ADMIN')

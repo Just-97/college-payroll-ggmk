@@ -117,35 +117,11 @@ export const App: React.FC = () => {
         onOpenAdmin={navigateToAdmin}
       />
 
-      {/* Информационный бейдж паттернов */}
-      <div className="bg-emerald-900 text-white text-[11px] py-1.5 px-4 no-print border-b border-emerald-800">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-emerald-300">Архитектура ТРПО:</span>
-            <span className={`px-2 py-0.5 rounded ${currentUser.role === 'ACCOUNTANT' ? 'bg-emerald-500 text-emerald-950 font-bold' : 'bg-emerald-800 text-emerald-200'}`}>
-              MVVM: АРМ Бухгалтера
-            </span>
-            <span className={`px-2 py-0.5 rounded ${currentUser.role === 'TEACHER' ? 'bg-emerald-500 text-emerald-950 font-bold' : 'bg-emerald-800 text-emerald-200'}`}>
-              MVP: ЛК Преподавателя
-            </span>
-            <span className="px-2 py-0.5 rounded bg-emerald-800 text-emerald-200">
-              MVC: Панель Администратора (/admin)
-            </span>
-          </div>
-
-          <div className="text-emerald-300">
-            База данных: Supabase (PostgreSQL) + Local Storage
-          </div>
-        </div>
-      </div>
-
       {/* Основной контент */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {currentUser.role === 'ACCOUNTANT' ? (
-          /* АРМ БУХГАЛТЕРА: Реализован через паттерн MVVM */
           <AccountantView model={accountantModel} />
         ) : (
-          /* ЛИЧНЫЙ КАБИНЕТ ПРЕПОДАВАТЕЛЯ: Реализован через паттерн MVP */
           <PayslipView presenter={payslipPresenter} />
         )}
       </main>
@@ -154,11 +130,11 @@ export const App: React.FC = () => {
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 no-print">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            © {new Date().getFullYear()} {settings.collegeName}. Архитектурные паттерны MVC, MVP, MVVM.
+            © {new Date().getFullYear()} {settings.collegeName}. Расчет заработной платы педагогических работников.
           </div>
           <div className="flex items-center gap-4 text-emerald-800 font-medium">
             <span>Ст. 80 ТК РБ</span>
-            <span>Указ № 27</span>
+            <span>Указ Президента РБ № 27</span>
             <span>Постановление Минобразования РБ</span>
           </div>
         </div>

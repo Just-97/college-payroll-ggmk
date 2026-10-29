@@ -71,18 +71,12 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ presenter }) => {
 
   return (
     <div className="space-y-6">
-      {/* Баннер архитектуры MVP */}
-      <div className="bg-emerald-950/20 border border-emerald-800/30 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 no-print">
-        <div>
-          <span className="font-bold text-emerald-800 uppercase tracking-wider mr-2">
-            Паттерн: Model-View-Presenter (MVP)
-          </span>
-          <span className="text-slate-600">
-            View пассивен (Passive View) • Presenter форматирует данные и управляет отображением • Model изолирована от View
-          </span>
+      {/* Уведомление действий */}
+      {infoMessage && (
+        <div className="bg-emerald-900 text-emerald-100 border border-emerald-700/60 text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center justify-between no-print">
+          <span className="font-medium">{infoMessage}</span>
         </div>
-        {infoMessage && <span className="font-medium text-emerald-700 bg-white px-2 py-0.5 rounded shadow-sm">{infoMessage}</span>}
-      </div>
+      )}
 
       {/* Приветствие преподавателя и карточка периода */}
       <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-forest-900 text-white rounded-2xl p-6 md:p-8 shadow-md">
@@ -90,7 +84,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ presenter }) => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-700/60 text-emerald-200 text-xs font-medium mb-3">
               <BookOpen className="w-3.5 h-3.5" />
-              Личный кабинет преподавателя (MVP View)
+              Личный кабинет преподавателя
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               {teacher.fullName}
@@ -186,7 +180,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ presenter }) => {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl shadow transition-colors"
         >
           <Printer className="w-4 h-4" />
-          Распечатать расчетный листок (MVP Presenter Action)
+          Распечатать расчетный листок
         </button>
       </div>
 
